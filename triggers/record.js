@@ -17,7 +17,7 @@ module.exports = {
         label: 'Environment',
         helpText: 'the environment configuration',
         required: true,
-        choices: ['Development', 'QA', 'Production']
+        choices: ['Development', 'Production']
       },
       {
         key: 'version',
