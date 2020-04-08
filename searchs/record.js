@@ -39,21 +39,29 @@ module.exports = {
         label: 'Version',
         helpText: 'the api version',
         required: true,
-        choices: ['v3', 'v4', 'v5']
+        choices: ['v3', 'v4', 'v5'],
+        altersDynamicFields: true
       },
       {
         key: 'api',
         label: 'API',
         helpText: 'the api type',
         required: true,
-        choices: ['submissions', 'challenges', 'projects', 'members'],
+        choices: ['submissions', 'challenges', 'projects', 'members']
+      },
+      {
+        key: 'authenticate',
+        label: 'Authentication Required',
+        helpText: 'if authentication is required',
+        required: true,
+        choices: ['yes', 'no'],
         altersDynamicFields: true
       },
       {
         key: 'property',
         type: 'string',
         label: 'Property',
-        helpText: 'the property value(optional)'
+        helpText: 'the property value (optional)'
       },
       (z, bundle) => {
         if (bundle.inputData.version === 'v3') {
@@ -66,7 +74,7 @@ module.exports = {
             }
           ]
         }
-        if (bundle.inputData.api === 'projects') {
+        if (bundle.inputData.version === 'v5' && bundle.inputData.authenticate === 'yes') {
           return [
             {
               key: 'clientId',
@@ -113,18 +121,18 @@ module.exports = {
     ],
 
     perform: (z, bundle) => {
-      const { environment, version, api, path, handle, property } = bundle.inputData
+      const { environment, version, api, path, authenticate, authUrl, authAudience, clientId, clientSecret, handle, property } = bundle.inputData
       const finalPath = getFinalPath(path, handle)
       const url = `${BASE_URL[environment]}/${version}/${api}${finalPath}`
-      if (version === 'v5' && api === 'projects') {
+      if (authenticate === 'yes') {
         const options = {
           method: 'GET'
         }
         const m2m = m2mAuth({
-          AUTH0_URL: bundle.inputData.authUrl,
-          AUTH0_AUDIENCE: bundle.inputData.authAudience
+          AUTH0_URL: authUrl.trim(),
+          AUTH0_AUDIENCE: authAudience.trim()
         })
-        return m2m.getMachineToken(bundle.inputData.clientId, bundle.inputData.clientSecret)
+        return m2m.getMachineToken(clientId.trim(), clientSecret.trim())
           .then(token => z.request(url, _.assignIn(options, { headers: { Authorization: `Bearer ${token}` } })))
           .then(response => {
             let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
