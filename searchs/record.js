@@ -1,6 +1,20 @@
 const _ = require('lodash')
 const { BASE_URL } = require('../config')
+const m2mAuth = require('tc-core-library-js').auth.m2m
 const { convertRes } = require('../common/helper')
+
+function getFinalPath (path, handle) {
+  if (path && path.length) {
+    if (path.startsWith('/')) {
+      return path
+    } else {
+      return `/${path}`
+    }
+  } else if (handle && handle.length) {
+    return `/${handle}`
+  }
+  return ''
+}
 
 module.exports = {
   key: 'record',
@@ -32,7 +46,7 @@ module.exports = {
         label: 'API',
         helpText: 'the api type',
         required: true,
-        choices: ['submissions', 'challenges', 'members'],
+        choices: ['submissions', 'challenges', 'projects', 'members'],
         altersDynamicFields: true
       },
       {
@@ -52,30 +66,86 @@ module.exports = {
             }
           ]
         }
-        return [
-          {
-            key: 'path',
-            type: 'string',
-            label: 'Path',
-            helpText: 'the path parameter(optional)'
-          }
-        ]
+        if (bundle.inputData.api === 'projects') {
+          return [
+            {
+              key: 'clientId',
+              label: 'Client ID',
+              required: true,
+              type: 'string'
+            },
+            {
+              key: 'clientSecret',
+              label: 'Client Secret',
+              required: true,
+              type: 'string'
+            },
+            {
+              key: 'authAudience',
+              label: 'Auth Audience',
+              required: true,
+              type: 'string'
+            },
+            {
+              key: 'authUrl',
+              label: 'Auth Url',
+              required: true,
+              type: 'string'
+            },
+            {
+              key: 'path',
+              type: 'string',
+              label: 'Path',
+              helpText: 'the path parameter(optional)'
+            }
+          ]
+        } else {
+          return [
+            {
+              key: 'path',
+              type: 'string',
+              label: 'Path',
+              helpText: 'the path parameter(optional)'
+            }
+          ]
+        }
       }
-    ], 
+    ],
 
     perform: (z, bundle) => {
       const { environment, version, api, path, handle, property } = bundle.inputData
-      const url = `${BASE_URL[environment]}/${version}/${api}${path || ('/' + handle) || ''}`
-      return z
-        .request(url)
-        .then(response => {
-          let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
-          res = convertRes(version, res)
-          if (property) {
-            res = _.map(res, e => _.pick(e, property))
-          }
-          return res
+      const finalPath = getFinalPath(path, handle)
+      const url = `${BASE_URL[environment]}/${version}/${api}${finalPath}`
+      if (version === 'v5' && api === 'projects') {
+        const options = {
+          method: 'GET'
+        }
+        const m2m = m2mAuth({
+          AUTH0_URL: bundle.inputData.authUrl,
+          AUTH0_AUDIENCE: bundle.inputData.authAudience
         })
+        return m2m.getMachineToken(bundle.inputData.clientId, bundle.inputData.clientSecret)
+          .then(token => z.request(url, _.assignIn(options, { headers: { Authorization: `Bearer ${token}` } })))
+          .then(response => {
+            let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
+            res = convertRes(version, res)
+            if (property) {
+              res = _.map(res, e => _.pick(e, property))
+            }
+            return res
+          })
+      } else {
+        return z
+          .request(url)
+          .then(response => {
+            let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
+            res = convertRes(version, res)
+            if (property) {
+              res = _.map(res, e => _.pick(e, property))
+            }
+            return res
+          })
+      }
     }
   }
 }
