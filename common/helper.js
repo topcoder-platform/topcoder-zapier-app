@@ -2,6 +2,19 @@ const _ = require('lodash')
 const moment = require('moment-timezone')
 
 module.exports = {
+  getFinalPath: (path, handle) => {
+    if (path && path.length) {
+      if (path.startsWith('/')) {
+        return path
+      } else {
+        return `/${path}`
+      }
+    } else if (handle && handle.length) {
+      return `/${handle}`
+    }
+    return ''
+  },
+
   convertRes: (version, res) => {
     if (version === 'v5') {
       // v5 api

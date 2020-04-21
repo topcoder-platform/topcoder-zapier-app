@@ -8,7 +8,7 @@ module.exports = {
   noun: 'Record',
   display: {
     label: 'Create Record',
-    description: 'Creates a new record.'
+    description: 'Creates a new record'
   },
 
   operation: {
@@ -33,7 +33,7 @@ module.exports = {
         label: 'API',
         helpText: 'the api type',
         required: true,
-        choices: ['submissions', 'challenges']
+        choices: ['submissions', 'challenges', 'projects', 'members', 'groups']
       },
       {
         key: 'body',

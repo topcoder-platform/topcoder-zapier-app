@@ -1,20 +1,7 @@
 const _ = require('lodash')
 const { BASE_URL } = require('../config')
 const m2mAuth = require('tc-core-library-js').auth.m2m
-const { convertRes } = require('../common/helper')
-
-function getFinalPath (path, handle) {
-  if (path && path.length) {
-    if (path.startsWith('/')) {
-      return path
-    } else {
-      return `/${path}`
-    }
-  } else if (handle && handle.length) {
-    return `/${handle}`
-  }
-  return ''
-}
+const { convertRes, getFinalPath } = require('../common/helper')
 
 module.exports = {
   key: 'record',
@@ -47,13 +34,12 @@ module.exports = {
         label: 'API',
         helpText: 'the api type',
         required: true,
-        choices: ['submissions', 'challenges', 'projects', 'members']
+        choices: ['submissions', 'challenges', 'projects', 'members', 'groups']
       },
       {
         key: 'authenticate',
         label: 'Authentication Required',
-        helpText: 'if authentication is required',
-        required: true,
+        helpText: 'if authentication is required (optinal. default is \'no\')',
         choices: ['yes', 'no'],
         altersDynamicFields: true
       },
@@ -64,7 +50,7 @@ module.exports = {
         helpText: 'the property value (optional)'
       },
       (z, bundle) => {
-        if (bundle.inputData.version === 'v3') {
+        if (bundle.inputData.version === 'v3' && bundle.inputData.api === 'members') {
           return [
             {
               key: 'handle',
@@ -73,8 +59,7 @@ module.exports = {
               required: true
             }
           ]
-        }
-        if (bundle.inputData.version === 'v5' && bundle.inputData.authenticate === 'yes') {
+        } else if (bundle.inputData.authenticate === 'yes') {
           return [
             {
               key: 'clientId',
@@ -124,7 +109,7 @@ module.exports = {
       const { environment, version, api, path, authenticate, authUrl, authAudience, clientId, clientSecret, handle, property } = bundle.inputData
       const finalPath = getFinalPath(path, handle)
       const url = `${BASE_URL[environment]}/${version}/${api}${finalPath}`
-      if (authenticate === 'yes') {
+      if (authenticate === 'yes' || api === 'groups') {
         const options = {
           method: 'GET'
         }
