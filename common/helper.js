@@ -20,7 +20,7 @@ module.exports = {
       // v5 api
       const results = _.isArray(res) ? res : [res]
       _.each(results, item => {
-        item.startDateFormatted = moment(item.startDate).tz('America/New_York').format('MMMM DD YYYY HH:mm:ss')
+        item.startDateFormatted = moment(item.startDate).tz('America/New_York').format()
         item.tagsFormatted = (item.tags && item.tags.length) ? _.join(item.tags, ',') : ''
       })
       return results
