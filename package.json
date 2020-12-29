@@ -1,6 +1,6 @@
 {
   "name": "tc-zapier",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Topcoder APIs and Zapier integration",
   "author": "Topcoder Inc.",
   "repository": {
@@ -15,15 +15,12 @@
     "push": "npm run lint && zapier push",
     "test": "nyc mocha test/**"
   },
-  "engines": {
-    "node": "10.19.0"
-  },
   "dependencies": {
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.28",
     "tc-core-library-js": "appirio-tech/tc-core-library-js.git#v2.6.4",
-    "zapier-platform-core": "9.3.0"
+    "zapier-platform-core": "10.1.2"
   },
   "devDependencies": {
     "mocha": "^7.1.2",

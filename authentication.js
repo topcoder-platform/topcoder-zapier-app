@@ -1,13 +1,20 @@
+const { AUDIENCE, AUTH_BASE_URL, CLIENT_ID, CLIENT_SECRET } = process.env
+
+const AUTH_URL = AUTH_BASE_URL + '/authorize'
+const ACCESS_TOKEN_URL = AUTH_BASE_URL + '/oauth/token'
+const USER_INFO = AUTH_BASE_URL + '/userinfo'
+const SCOPE = 'offline_access openid profile refresh_token'
+
 const getAccessToken = (z, bundle) => {
-  const promise = z.request(`${process.env.ACCESS_TOKEN_URL}`, {
+  const promise = z.request(`${ACCESS_TOKEN_URL}`, {
     method: 'POST',
     body: {
       grant_type: 'authorization_code',
       code: bundle.inputData.code,
       redirect_uri: bundle.inputData.redirect_uri,
-      audience: process.env.AUDIENCE,
-      client_id: process.env.CLIENT_ID,
-      client_secret: process.env.CLIENT_SECRET
+      audience: AUDIENCE,
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET
     },
     headers: {
       'content-type': 'application/json'
@@ -31,7 +38,7 @@ const getAccessToken = (z, bundle) => {
 const testAuth = (z, bundle) => {
   const promise = z.request({
     method: 'GET',
-    url: `${process.env.USER_INFO}`
+    url: USER_INFO
   })
 
   return promise.then((response) => {
@@ -46,18 +53,18 @@ module.exports = {
   type: 'oauth2',
   oauth2Config: {
     authorizeUrl: {
-      url: '{{process.env.AUTH_URL}}',
+      url: AUTH_URL,
       params: {
-        scope: '{{process.env.SCOPE}}',
-        client_id: '{{process.env.CLIENT_ID}}',
-        audience: '{{process.env.AUDIENCE}}',
+        scope: SCOPE,
+        client_id: CLIENT_ID,
+        audience: AUDIENCE,
         state: '{{bundle.inputData.state}}',
         redirect_uri: '{{bundle.inputData.redirect_uri}}',
         response_type: 'code'
       }
     },
     getAccessToken: getAccessToken,
-    autoRefresh: false
+    autoRefresh: true
   },
   test: testAuth,
   connectionLabel: '{{nickname}}'

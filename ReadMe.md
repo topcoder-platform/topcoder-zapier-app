@@ -33,7 +33,7 @@ npm run lint:fix
 
 3. Deploy the integration, you need to enter the Zapier integration app name in prompt dialog
 ```
-zapier push
+npm run push
 ```
 
 4. Invite yourself so you can use this integration during making a Zap, you need to use your Zapier account's email

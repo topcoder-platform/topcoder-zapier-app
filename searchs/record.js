@@ -5,6 +5,7 @@ const {
 const m2mAuth = require('tc-core-library-js').auth.m2m
 const {
   convertRes,
+  getQueryParam,
   getFinalPath
 } = require('../common/helper')
 
@@ -40,7 +41,7 @@ module.exports = {
       label: 'API',
       helpText: 'the api type',
       required: true,
-      choices: ['submissions', 'challenges', 'projects', 'members', 'groups']
+      choices: ['submissions', 'challenges', 'projects', 'members', 'groups', 'users', 'jobs', 'jobCandidates', 'resourceBookings']
     },
     {
       key: 'authenticate',
@@ -61,6 +62,27 @@ module.exports = {
           key: 'handle',
           type: 'string',
           label: 'Handle',
+          required: true
+        }]
+      } else if (bundle.inputData.version === 'v5' && bundle.inputData.api === 'users') {
+        return [{
+          key: 'queryParam',
+          type: 'string',
+          label: 'Handle',
+          required: true
+        }]
+      } else if (bundle.inputData.version === 'v5' && bundle.inputData.api === 'jobs') {
+        return [{
+          key: 'queryParam',
+          type: 'string',
+          label: 'Job Id',
+          required: true
+        }]
+      } else if (bundle.inputData.version === 'v5' && bundle.inputData.api === 'jobCandidates') {
+        return [{
+          key: 'queryParam',
+          type: 'string',
+          label: 'Full query',
           required: true
         }]
       } else if (bundle.inputData.authenticate === 'yes') {
@@ -118,6 +140,7 @@ module.exports = {
         clientId,
         clientSecret,
         handle,
+        queryParam,
         property
       } = bundle.inputData
       const finalPath = getFinalPath(path, handle)
@@ -145,8 +168,13 @@ module.exports = {
             return res
           })
       } else {
+        const options = {
+          method: 'GET',
+          url,
+          params: getQueryParam(api, queryParam)
+        }
         return z
-          .request(url)
+          .request(options)
           .then(response => {
             let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
             res = convertRes(version, res)

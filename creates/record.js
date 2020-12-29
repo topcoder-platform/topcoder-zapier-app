@@ -36,7 +36,15 @@ module.exports = {
       label: 'API',
       helpText: 'the api type',
       required: true,
-      choices: ['submissions', 'challenges', 'projects', 'members', 'groups']
+      choices: ['submissions', 'challenges', 'projects', 'members', 'groups', 'users', 'jobs', 'jobCandidates', 'resourceBookings']
+    },
+    {
+      key: 'method',
+      label: 'Method',
+      helpText: 'the api method',
+      required: true,
+      altersDynamicFields: true,
+      choices: ['POST', 'PUT', 'PATCH']
     },
     {
       key: 'authenticate',
@@ -52,6 +60,15 @@ module.exports = {
     },
     (z, bundle) => {
       if (bundle.inputData.authenticate === 'no') {
+        if (bundle.inputData.method !== 'POST') {
+          return [{
+            key: 'path',
+            type: 'string',
+            label: 'Path',
+            required: true,
+            helpText: 'the path parameter'
+          }]
+        }
         return []
       }
       return [{
@@ -87,11 +104,16 @@ module.exports = {
         environment,
         version,
         api,
+        path,
         body
       } = bundle.inputData
-      const url = `${BASE_URL[environment]}/${version}/${api}`
+      var url = `${BASE_URL[environment]}/${version}/${api}`
+      if (path) {
+        url += `/${path}`
+      }
+      z.console.log(`Body ${body}`)
       const options = {
-        method: 'POST',
+        method: bundle.inputData.method,
         headers: {
           'Content-Type': 'application/json'
         },

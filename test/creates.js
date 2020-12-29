@@ -10,19 +10,23 @@ const appTester = zapier.createAppTester(App)
 
 zapier.tools.env.inject()
 
+const { AUDIENCE, AUTH_BASE_URL } = process.env
+
+const ACCESS_TOKEN_URL = AUTH_BASE_URL + '/oauth/token'
+
 const {
   BASE_URL
 } = require('../config')
 
 const MOCK_M2M_INPUT = {
-  authUrl: process.env.ACCESS_TOKEN_URL,
-  authAudience: process.env.AUDIENCE,
+  authUrl: ACCESS_TOKEN_URL,
+  authAudience: AUDIENCE,
   clientId: 'a-client-id',
   clientSecret: 'a-client-secret'
 }
 
 function interceptM2MAndReturnMockCreds () {
-  nock(`${process.env.ACCESS_TOKEN_URL.replace('/token', '')}`)
+  nock(`${ACCESS_TOKEN_URL.replace('/token', '')}`)
     .post('/token', body => body.grant_type === 'client_credentials')
     .reply(200, {
       // random JWT generated on https://jwt.io/ [has an insaenly large exp to prevent tc-core-lib to report token as expired]

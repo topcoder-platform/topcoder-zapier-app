@@ -10,9 +10,15 @@ const appTester = zapier.createAppTester(App)
 
 zapier.tools.env.inject()
 
+const { AUDIENCE, AUTH_BASE_URL, CLIENT_ID, CLIENT_SECRET } = process.env
+
+const AUTH_URL = AUTH_BASE_URL + '/authorize'
+const ACCESS_TOKEN_URL = AUTH_BASE_URL + '/oauth/token'
+const SCOPE = 'offline_access openid profile refresh_token'
+
 describe('Authentication', () => {
   before(done => {
-    if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
+    if (!CLIENT_ID || !CLIENT_SECRET) {
       throw new Error(
         'For the tests to run, you need to do `export CLIENT_ID=1234 CLIENT_SECRET=asdf`'
       )
@@ -31,9 +37,9 @@ describe('Authentication', () => {
 
     appTester(App.authentication.oauth2Config.authorizeUrl, bundle).then(authorizeUrl => {
       const actual = new URL(authorizeUrl)
-      const expected = new URL(`${process.env.AUTH_URL}?scope=${encodeURI(process.env.SCOPE)}&client_id=${process.env.CLIENT_ID}\
+      const expected = new URL(`${AUTH_URL}?scope=${encodeURI(SCOPE)}&client_id=${CLIENT_ID}\
                 &state=${bundle.inputData.state}&redirect_uri=${encodeURI(bundle.inputData.redirect_uri)}&response_type=code&audience=\
-                ${encodeURI(process.env.AUDIENCE)}`)
+                ${encodeURI(AUDIENCE)}`)
 
       actual.origin.should.eql(expected.origin)
       actual.pathname.should.eql(expected.pathname)
@@ -50,13 +56,13 @@ describe('Authentication', () => {
       }
     }
 
-    nock(`${process.env.ACCESS_TOKEN_URL.replace('/token', '')}`)
+    nock(`${ACCESS_TOKEN_URL.replace('/token', '')}`)
       .post('/token', {
         grant_type: 'authorization_code',
         code: bundle.inputData.code,
-        audience: process.env.AUDIENCE,
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET
+        audience: AUDIENCE,
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET
       })
       .reply(200, {
         access_token: 'a_token',
@@ -83,13 +89,13 @@ describe('Authentication', () => {
       error_description: 'Invalid authorization code'
     }
 
-    nock(`${process.env.ACCESS_TOKEN_URL.replace('/token', '')}`)
+    nock(`${ACCESS_TOKEN_URL.replace('/token', '')}`)
       .post('/token', {
         grant_type: 'authorization_code',
         code: bundle.inputData.code,
-        audience: process.env.AUDIENCE,
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET
+        audience: AUDIENCE,
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET
       })
       .reply(204, errorObject)
 
@@ -117,7 +123,7 @@ describe('Authentication', () => {
       }
     }
 
-    nock(`${process.env.USER_INFO.replace('/userinfo', '')}`)
+    nock(`${AUTH_BASE_URL}`)
       .get('/userinfo')
       .reply(200, {
         sub: 'auth0|8547899',
@@ -142,7 +148,7 @@ describe('Authentication', () => {
       }
     }
 
-    nock(`${process.env.USER_INFO.replace('/userinfo', '')}`)
+    nock(`${AUTH_BASE_URL}`)
       .get('/userinfo')
       .reply(401)
 

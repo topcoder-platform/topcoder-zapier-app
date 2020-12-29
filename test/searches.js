@@ -10,19 +10,23 @@ const appTester = zapier.createAppTester(App)
 
 zapier.tools.env.inject()
 
+const { AUDIENCE, AUTH_BASE_URL } = process.env
+
+const ACCESS_TOKEN_URL = AUTH_BASE_URL + '/oauth/token'
+
 const {
   BASE_URL
 } = require('../config')
 
 const MOCK_M2M_INPUT = {
-  authUrl: process.env.ACCESS_TOKEN_URL,
-  authAudience: process.env.AUDIENCE,
+  authUrl: ACCESS_TOKEN_URL,
+  authAudience: AUDIENCE,
   clientId: 'a-client-id',
   clientSecret: 'a-client-secret'
 }
 
 function interceptM2MAndReturnMockCreds () {
-  nock(`${process.env.ACCESS_TOKEN_URL.replace('/token', '')}`)
+  nock(`${ACCESS_TOKEN_URL.replace('/token', '')}`)
     .post('/token', body => body.grant_type === 'client_credentials')
     .reply(200, {
       // random JWT generated on https://jwt.io/ [has an insaenly large exp to prevent tc-core-lib to report token as expired]
@@ -636,6 +640,102 @@ describe('Searches', () => {
 
           firstGroup.should.have.keys('id')
           firstGroup.should.not.have.keys('description', 'name', 'status')
+
+          done()
+        })
+        .catch(done)
+    })
+  })
+
+  describe('users search with signed in users token', () => {
+    it('should load users', done => {
+      const bundle = {
+        inputData: {
+          environment: 'Development',
+          version: 'v5',
+          api: 'users',
+          queryParam: 'Ashlesha_Sa',
+          property: 'id',
+          authenticate: 'no'
+        }
+      }
+
+      const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
+      nock(url)
+        .get(`/${bundle.inputData.api}`)
+        .query({ handle: bundle.inputData.queryParam })
+        .reply(200, [{
+          lastName: 'Satpute',
+          firstName: 'Ashlesha',
+          updatedBy: null,
+          createdBy: 'TonyJ',
+          created: '2020-10-23T15:33:40.887Z',
+          handle: 'Ashlesha_Sa',
+          id: '07530d95-0780-4c9a-b4a7-9fd9821c89cb',
+          updated: null
+        }])
+
+      appTester(App.searches.record.operation.perform, bundle)
+        .then(results => {
+          results.length.should.above(0)
+
+          const firstUser = results[0]
+
+          firstUser.should.have.keys('id')
+          firstUser.should.not.have.keys('handle', 'firstName', 'lastName')
+
+          done()
+        })
+        .catch(done)
+    })
+  })
+
+  describe('jobs search with signed in users token', () => {
+    it('should load jobs', done => {
+      const bundle = {
+        inputData: {
+          environment: 'Development',
+          version: 'v5',
+          api: 'jobs',
+          queryParam: '41929904',
+          property: 'id',
+          authenticate: 'no'
+        }
+      }
+
+      const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
+      nock(url)
+        .get(`/${bundle.inputData.api}`)
+        .query({ externalId: bundle.inputData.queryParam })
+        .reply(200, [{
+          projectId: 16745,
+          externalId: '41929904',
+          description: 'Designer',
+          startDate: '2020-12-07T11:52:00.337Z',
+          endDate: '2021-01-07T11:52:00.337Z',
+          skills: [
+            '13dda8dc-4c34-4751-bbab-aab76d757cbb'
+          ],
+          numPositions: 1,
+          resourceType: 'desiger',
+          rateType: 'hourly',
+          workload: 'full-time',
+          createdAt: '2020-12-07T11:52:00.696Z',
+          createdBy: 'a55fe1bc-1754-45fa-9adc-cf3d6d7c377a',
+          status: 'sourcing',
+          updatedBy: '3f64739e-10bf-42ca-8314-8aea0245cd0f',
+          updatedAt: '2020-12-19T00:55:01.730Z',
+          id: 'ecc24a25-f1e0-4d77-ac0b-5eb44a27e632'
+        }])
+
+      appTester(App.searches.record.operation.perform, bundle)
+        .then(results => {
+          results.length.should.above(0)
+
+          const firstUser = results[0]
+
+          firstUser.should.have.keys('id')
+          firstUser.should.not.have.keys('externalId')
 
           done()
         })

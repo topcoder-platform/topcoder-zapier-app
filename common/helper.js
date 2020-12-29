@@ -2,6 +2,18 @@ const _ = require('lodash')
 const moment = require('moment-timezone')
 
 module.exports = {
+  getQueryParam: (api, queryParam) => {
+    if (!queryParam) return null
+    if (api === 'users') {
+      return { handle: queryParam }
+    } else if (api === 'jobs') {
+      return { externalId: queryParam }
+    } else if (api === 'jobCandidates') {
+      return JSON.parse(queryParam)
+    }
+    return null
+  },
+
   getFinalPath: (path, handle) => {
     if (path && path.length) {
       if (path.startsWith('/')) {
