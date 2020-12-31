@@ -2,7 +2,6 @@ const _ = require('lodash')
 const {
   BASE_URL
 } = require('../config')
-const m2mAuth = require('tc-core-library-js').auth.m2m
 const {
   convertRes,
   getFinalPath

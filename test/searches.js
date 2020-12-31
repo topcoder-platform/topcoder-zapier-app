@@ -10,10 +10,6 @@ const appTester = zapier.createAppTester(App)
 
 zapier.tools.env.inject()
 
-const { AUDIENCE, AUTH_BASE_URL } = process.env
-
-const ACCESS_TOKEN_URL = AUTH_BASE_URL + '/oauth/token'
-
 const {
   BASE_URL
 } = require('../config')
@@ -48,7 +44,6 @@ describe('Searches', () => {
           done()
         })
     })
-
 
     it('should show query param field', done => {
       const bundle = {

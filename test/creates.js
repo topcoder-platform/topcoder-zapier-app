@@ -10,14 +10,9 @@ const appTester = zapier.createAppTester(App)
 
 zapier.tools.env.inject()
 
-const { AUDIENCE, AUTH_BASE_URL } = process.env
-
-const ACCESS_TOKEN_URL = AUTH_BASE_URL + '/oauth/token'
-
 const {
   BASE_URL
 } = require('../config')
-
 
 describe('dynamic input field', () => {
   it('should show handle input field if v5 jobs API is slected', done => {
@@ -69,7 +64,7 @@ describe('Creates', () => {
             projectId: 16510,
             status: 'Draft'
           })
-        },
+        }
       }
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
@@ -143,7 +138,7 @@ describe('Creates', () => {
             projectId: 16510,
             status: 'Active'
           })
-        },
+        }
       }
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
@@ -172,7 +167,6 @@ describe('Creates', () => {
         .catch(done)
     })
 
-
     it('should put challenge', done => {
       const bundle = {
         inputData: {
@@ -187,7 +181,7 @@ describe('Creates', () => {
             projectId: 16510,
             status: 'Active'
           })
-        },
+        }
       }
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
