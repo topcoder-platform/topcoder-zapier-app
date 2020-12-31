@@ -43,13 +43,6 @@ module.exports = {
       choices: ['submissions', 'challenges', 'projects', 'members', 'groups']
     },
     {
-      key: 'authenticate',
-      label: 'Authentication with M2M token',
-      helpText: 'if M2M authentication is required (optional. default is \'no\')',
-      choices: ['yes', 'no'],
-      altersDynamicFields: true
-    },
-    {
       key: 'property',
       type: 'string',
       label: 'Property',
@@ -63,38 +56,6 @@ module.exports = {
           label: 'Handle',
           required: true
         }]
-      } else if (bundle.inputData.authenticate === 'yes') {
-        return [{
-          key: 'clientId',
-          label: 'Client ID',
-          required: true,
-          type: 'string'
-        },
-        {
-          key: 'clientSecret',
-          label: 'Client Secret',
-          required: true,
-          type: 'string'
-        },
-        {
-          key: 'authAudience',
-          label: 'Auth Audience',
-          required: true,
-          type: 'string'
-        },
-        {
-          key: 'authUrl',
-          label: 'Auth Url',
-          required: true,
-          type: 'string'
-        },
-        {
-          key: 'path',
-          type: 'string',
-          label: 'Path',
-          helpText: 'the path parameter(optional)'
-        }
-        ]
       } else {
         return [{
           key: 'path',
@@ -112,50 +73,21 @@ module.exports = {
         version,
         api,
         path,
-        authenticate,
-        authUrl,
-        authAudience,
-        clientId,
-        clientSecret,
         handle,
         property
       } = bundle.inputData
       const finalPath = getFinalPath(path, handle)
       const url = `${BASE_URL[environment]}/${version}/${api}${finalPath}`
-      if (authenticate === 'yes') {
-        const options = {
-          method: 'GET'
-        }
-        const m2m = m2mAuth({
-          AUTH0_URL: authUrl.trim(),
-          AUTH0_AUDIENCE: authAudience.trim()
+      return z
+        .request(url)
+        .then(response => {
+          let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
+          res = convertRes(version, res)
+          if (property) {
+            res = _.map(res, e => _.pick(e, property))
+          }
+          return res
         })
-        return m2m.getMachineToken(clientId.trim(), clientSecret.trim())
-          .then(token => z.request(url, _.assignIn(options, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          })))
-          .then(response => {
-            let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
-            res = convertRes(version, res)
-            if (property) {
-              res = _.map(res, e => _.pick(e, property))
-            }
-            return res
-          })
-      } else {
-        return z
-          .request(url)
-          .then(response => {
-            let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
-            res = convertRes(version, res)
-            if (property) {
-              res = _.map(res, e => _.pick(e, property))
-            }
-            return res
-          })
-      }
     },
 
     outputFields: [(z, bundle) => {

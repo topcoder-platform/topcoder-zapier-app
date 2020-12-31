@@ -1,6 +1,6 @@
 {
   "name": "tc-zapier",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Topcoder APIs and Zapier integration",
   "author": "Topcoder Inc.",
   "repository": {

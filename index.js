@@ -3,9 +3,7 @@ const recordTrigger = require('./triggers/record')
 const createRecord = require('./creates/record')
 
 const includeBearerToken = (request, z, bundle) => {
-  // request.headers.Authorization may be set if M2M token is being used
-  // in which case signed in users token shouldn't be used
-  if (bundle.authData.access_token && request.headers.Authorization == null) {
+  if (bundle.authData.access_token) {
     request.headers.Authorization = `Bearer ${bundle.authData.access_token}`
   }
   return request
