@@ -55,23 +55,6 @@ describe('Triggers', () => {
         })
     })
 
-    it('should show M2M input fields if authenticate is set to yes', done => {
-      const bundle = {
-        inputData: {
-          authenticate: 'yes'
-        }
-      }
-      appTester(App.triggers.record.operation.inputFields, bundle)
-        .then(fields => {
-          fields.should.containDeep([{
-            key: 'clientId'
-          }, {
-            key: 'clientSecret'
-          }])
-          done()
-        })
-    })
-
     it('should show path input field', done => {
       const bundle = {
         inputData: {}
@@ -211,9 +194,12 @@ describe('Triggers', () => {
         inputData: {
           environment: 'Development',
           version: 'v5',
-          api: 'challenges'
+          api: 'challenges',
+          ...MOCK_M2M_INPUT
         }
       }
+
+      interceptM2MAndReturnMockCreds()
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
       nock(url)
@@ -314,9 +300,12 @@ describe('Triggers', () => {
           environment: 'Development',
           version: 'v5',
           api: 'challenges',
-          property: 'id'
+          property: 'id',
+          ...MOCK_M2M_INPUT
         }
       }
+
+      interceptM2MAndReturnMockCreds()
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
       nock(url)
@@ -557,183 +546,8 @@ describe('Triggers', () => {
           ...MOCK_M2M_INPUT
         }
       }
+
       interceptM2MAndReturnMockCreds()
-      const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
-      nock(url)
-        .get(`/${bundle.inputData.api}`)
-        .reply(200, {
-          id: '41c43fee:171cbb028da:833',
-          result: {
-            success: true,
-            status: 200,
-            metadata: null,
-            content: [{
-              id: '1',
-              modifiedBy: '1',
-              modifiedAt: '2017-05-18T10:29:38.000Z',
-              createdBy: '1',
-              createdAt: '2017-05-18T10:29:38.000Z',
-              name: 'TestGroup',
-              description: 'Test Group',
-              privateGroup: true,
-              selfRegister: false,
-              subGroups: null,
-              parentGroup: null
-            }]
-          }
-        })
-
-      appTester(App.triggers.record.operation.perform, bundle)
-        .then(results => {
-          results.length.should.above(0)
-
-          const firstGroup = results[0]
-          should.exist(firstGroup.id)
-
-          firstGroup.name.should.equal('TestGroup')
-
-          done()
-        })
-        .catch(done)
-    })
-  })
-
-  describe('new group trigger with user signed in token', () => {
-    it('should load groups', done => {
-      const bundle = {
-        inputData: {
-          environment: 'Development',
-          version: 'v5',
-          api: 'groups',
-          authenticate: 'no'
-        }
-      }
-
-      const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
-      nock(url)
-        .get(`/${bundle.inputData.api}`)
-        .reply(200, [{
-          ssoId: '',
-          updatedBy: '1',
-          description: 'Test Group',
-          privateGroup: true,
-          oldId: '1',
-          createdAt: '2017-05-18T10:29:38.000Z',
-          selfRegister: false,
-          createdBy: '1',
-          domain: '',
-          name: 'TestGroup',
-          id: '304b042f-19f1-4d06-9788-104572eca795',
-          status: 'active',
-          updatedAt: '2017-05-18T10:29:38.000Z'
-        }])
-
-      appTester(App.triggers.record.operation.perform, bundle)
-        .then(results => {
-          results.length.should.above(0)
-
-          const firstGroup = results[0]
-          should.exist(firstGroup.id)
-
-          firstGroup.name.should.equal('TestGroup')
-
-          done()
-        })
-        .catch(done)
-    })
-
-    it('should load groups and extract property', done => {
-      const bundle = {
-        inputData: {
-          environment: 'Development',
-          version: 'v5',
-          authenticate: 'no',
-          api: 'groups',
-          property: 'id'
-        }
-      }
-
-      const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
-      nock(url)
-        .get(`/${bundle.inputData.api}`)
-        .reply(200, [{
-          ssoId: '',
-          updatedBy: '1',
-          description: 'Test Group',
-          privateGroup: true,
-          oldId: '1',
-          createdAt: '2017-05-18T10:29:38.000Z',
-          selfRegister: false,
-          createdBy: '1',
-          domain: '',
-          name: 'TestGroup',
-          id: '304b042f-19f1-4d06-9788-104572eca795',
-          status: 'active',
-          updatedAt: '2017-05-18T10:29:38.000Z'
-        }])
-
-      appTester(App.triggers.record.operation.perform, bundle)
-        .then(results => {
-          results.length.should.above(0)
-
-          const firstGroup = results[0]
-
-          firstGroup.should.have.keys('id')
-          firstGroup.should.not.have.keys('description', 'name', 'status')
-
-          done()
-        })
-        .catch(done)
-    })
-
-    it('should form final path properly to load an individual group', done => {
-      const bundle = {
-        inputData: {
-          environment: 'Development',
-          version: 'v5',
-          api: 'groups',
-          authenticate: 'no',
-          path: '304b042f-19f1-4d06-9788-104572eca795'
-        }
-      }
-
-      const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
-      nock(url)
-        .get(`/${bundle.inputData.api}/${bundle.inputData.path}`)
-        .reply(200, {
-          ssoId: '',
-          updatedBy: '1',
-          description: 'Test Group',
-          privateGroup: true,
-          oldId: '1',
-          createdAt: '2017-05-18T10:29:38.000Z',
-          selfRegister: false,
-          createdBy: '1',
-          domain: '',
-          name: 'TestGroup',
-          id: '304b042f-19f1-4d06-9788-104572eca795',
-          status: 'active',
-          updatedAt: '2017-05-18T10:29:38.000Z'
-        })
-
-      appTester(App.triggers.record.operation.perform, bundle)
-        .then(results => {
-          results.length.should.eql(1)
-          results[0].name.should.eql('TestGroup')
-          done()
-        })
-        .catch(done)
-    })
-
-    it('should load groups using version 3 API', done => {
-      const bundle = {
-        inputData: {
-          environment: 'Development',
-          version: 'v3',
-          api: 'groups',
-          authenticate: 'no'
-        }
-      }
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
       nock(url)
@@ -781,9 +595,12 @@ describe('Triggers', () => {
         inputData: {
           environment: 'Development',
           version: 'v5',
-          api: 'submissions'
+          api: 'submissions',
+          ...MOCK_M2M_INPUT
         }
       }
+
+      interceptM2MAndReturnMockCreds()
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
       nock(url)
@@ -850,9 +667,12 @@ describe('Triggers', () => {
         inputData: {
           environment: 'Development',
           version: 'v5',
-          api: 'projects'
+          api: 'projects',
+          ...MOCK_M2M_INPUT
         }
       }
+
+      interceptM2MAndReturnMockCreds()
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
       nock(url)

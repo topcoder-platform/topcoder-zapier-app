@@ -55,23 +55,6 @@ describe('Searches', () => {
         })
     })
 
-    it('should show M2M input fields if authenticate is set to yes', done => {
-      const bundle = {
-        inputData: {
-          authenticate: 'yes'
-        }
-      }
-      appTester(App.searches.record.operation.inputFields, bundle)
-        .then(fields => {
-          fields.should.containDeep([{
-            key: 'clientId'
-          }, {
-            key: 'clientSecret'
-          }])
-          done()
-        })
-    })
-
     it('should show path input field', done => {
       const bundle = {
         inputData: {}
@@ -80,6 +63,22 @@ describe('Searches', () => {
         .then(fields => {
           fields.should.containDeep([{
             key: 'path'
+          }])
+          done()
+        })
+    })
+
+    it('should show handle input field if v5 jobs API is slected', done => {
+      const bundle = {
+        inputData: {
+          version: 'v5',
+          api: 'jobs'
+        }
+      }
+      appTester(App.searches.record.operation.inputFields, bundle)
+        .then(fields => {
+          fields.should.containDeep([{
+            key: 'queryParam'
           }])
           done()
         })
@@ -93,9 +92,12 @@ describe('Searches', () => {
           environment: 'Development',
           version: 'v3',
           api: 'members',
-          handle: 'Ansary'
+          handle: 'Ansary',
+          ...MOCK_M2M_INPUT
         }
       }
+
+      interceptM2MAndReturnMockCreds()
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
       nock(url)
@@ -171,9 +173,12 @@ describe('Searches', () => {
         inputData: {
           environment: 'Development',
           version: 'v5',
-          api: 'challenges'
+          api: 'challenges',
+          ...MOCK_M2M_INPUT
         }
       }
+
+      interceptM2MAndReturnMockCreds()
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
       nock(url)
@@ -275,9 +280,12 @@ describe('Searches', () => {
           version: 'v5',
           path: '/e64e8eca-f03c-4a77-a633-b35d74d7f471',
           api: 'challenges',
-          property: 'id'
+          property: 'id',
+          ...MOCK_M2M_INPUT
         }
       }
+
+      interceptM2MAndReturnMockCreds()
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
       nock(url)
@@ -379,7 +387,6 @@ describe('Searches', () => {
           environment: 'Development',
           version: 'v5',
           api: 'groups',
-          authenticate: 'yes',
           ...MOCK_M2M_INPUT
         }
       }
@@ -424,7 +431,6 @@ describe('Searches', () => {
         inputData: {
           environment: 'Development',
           version: 'v5',
-          authenticate: 'yes',
           api: 'groups',
           property: 'id',
           ...MOCK_M2M_INPUT
@@ -472,7 +478,6 @@ describe('Searches', () => {
           environment: 'Development',
           version: 'v5',
           api: 'groups',
-          authenticate: 'yes',
           path: '304b042f-19f1-4d06-9788-104572eca795',
           ...MOCK_M2M_INPUT
         }
@@ -513,12 +518,13 @@ describe('Searches', () => {
         inputData: {
           environment: 'Development',
           version: 'v3',
-          authenticate: 'yes',
           api: 'groups',
           ...MOCK_M2M_INPUT
         }
       }
+
       interceptM2MAndReturnMockCreds()
+
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
       nock(url)
         .get(`/${bundle.inputData.api}`)
@@ -559,94 +565,6 @@ describe('Searches', () => {
     })
   })
 
-  describe('groups search with signed in users token', () => {
-    it('should load groups', done => {
-      const bundle = {
-        inputData: {
-          environment: 'Development',
-          version: 'v5',
-          api: 'groups'
-        }
-      }
-
-      const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
-      nock(url)
-        .get(`/${bundle.inputData.api}`)
-        .reply(200, [{
-          ssoId: '',
-          updatedBy: '1',
-          description: 'Test Group',
-          privateGroup: true,
-          oldId: '1',
-          createdAt: '2017-05-18T10:29:38.000Z',
-          selfRegister: false,
-          createdBy: '1',
-          domain: '',
-          name: 'TestGroup',
-          id: '304b042f-19f1-4d06-9788-104572eca795',
-          status: 'active',
-          updatedAt: '2017-05-18T10:29:38.000Z'
-        }])
-
-      appTester(App.searches.record.operation.perform, bundle)
-        .then(results => {
-          results.length.should.above(0)
-
-          const firstGroup = results[0]
-          should.exist(firstGroup.id)
-
-          firstGroup.name.should.equal('TestGroup')
-
-          done()
-        })
-        .catch(done)
-    })
-
-    it('should load groups and extract property', done => {
-      const bundle = {
-        inputData: {
-          environment: 'Development',
-          version: 'v5',
-          api: 'groups',
-          property: 'id',
-          authenticate: 'no'
-        }
-      }
-
-      const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
-      nock(url)
-        .get(`/${bundle.inputData.api}`)
-        .reply(200, [{
-          ssoId: '',
-          updatedBy: '1',
-          description: 'Test Group',
-          privateGroup: true,
-          oldId: '1',
-          createdAt: '2017-05-18T10:29:38.000Z',
-          selfRegister: false,
-          createdBy: '1',
-          domain: '',
-          name: 'TestGroup',
-          id: '304b042f-19f1-4d06-9788-104572eca795',
-          status: 'active',
-          updatedAt: '2017-05-18T10:29:38.000Z'
-        }])
-
-      appTester(App.searches.record.operation.perform, bundle)
-        .then(results => {
-          results.length.should.above(0)
-
-          const firstGroup = results[0]
-
-          firstGroup.should.have.keys('id')
-          firstGroup.should.not.have.keys('description', 'name', 'status')
-
-          done()
-        })
-        .catch(done)
-    })
-  })
-
   describe('users search with signed in users token', () => {
     it('should load users', done => {
       const bundle = {
@@ -654,16 +572,20 @@ describe('Searches', () => {
           environment: 'Development',
           version: 'v5',
           api: 'users',
-          queryParam: 'Ashlesha_Sa',
+          queryParam: JSON.stringify({
+            handle: 'Ashlesha_Sa'
+          }),
           property: 'id',
-          authenticate: 'no'
+          ...MOCK_M2M_INPUT
         }
       }
+
+      interceptM2MAndReturnMockCreds()
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
       nock(url)
         .get(`/${bundle.inputData.api}`)
-        .query({ handle: bundle.inputData.queryParam })
+        .query(JSON.parse(bundle.inputData.queryParam))
         .reply(200, [{
           lastName: 'Satpute',
           firstName: 'Ashlesha',
@@ -697,16 +619,20 @@ describe('Searches', () => {
           environment: 'Development',
           version: 'v5',
           api: 'jobs',
-          queryParam: '41929904',
+          queryParam: JSON.stringify({
+            externalId: '41929904'
+          }),
           property: 'id',
-          authenticate: 'no'
+          ...MOCK_M2M_INPUT
         }
       }
+
+      interceptM2MAndReturnMockCreds()
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
       nock(url)
         .get(`/${bundle.inputData.api}`)
-        .query({ externalId: bundle.inputData.queryParam })
+        .query(JSON.parse(bundle.inputData.queryParam))
         .reply(200, [{
           projectId: 16745,
           externalId: '41929904',
@@ -749,9 +675,12 @@ describe('Searches', () => {
         inputData: {
           environment: 'Development',
           version: 'v5',
-          api: 'submissions'
+          api: 'submissions',
+          ...MOCK_M2M_INPUT
         }
       }
+
+      interceptM2MAndReturnMockCreds()
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
       nock(url)

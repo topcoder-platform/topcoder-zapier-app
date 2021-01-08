@@ -39,37 +39,35 @@ function interceptM2MAndReturnMockCreds () {
 
 describe('Creates', () => {
   describe('dynamic input field', () => {
-    it('should not show M2M input fields if Authenticate input is set to No', done => {
+    it('should show handle input field if v5 jobs API is slected', done => {
       const bundle = {
         inputData: {
-          authenticate: 'no'
+          version: 'v5',
+          api: 'jobs',
+          method: 'PATH'
         }
       }
-
       appTester(App.creates.record.operation.inputFields, bundle)
         .then(fields => {
-          fields.should.not.containDeep([{
-            key: 'clientId'
-          }, {
-            key: 'clientSecret'
+          fields.should.containDeep([{
+            key: 'path'
           }])
           done()
         })
     })
 
-    it('should show M2M input fields if authenticate input is set to yes', done => {
+    it('should show handle input field if v5 jobs API is slected', done => {
       const bundle = {
         inputData: {
-          authenticate: 'yes'
+          version: 'v5',
+          api: 'jobs',
+          method: 'POST'
         }
       }
-
       appTester(App.creates.record.operation.inputFields, bundle)
         .then(fields => {
-          fields.should.containDeep([{
-            key: 'clientId'
-          }, {
-            key: 'clientSecret'
+          fields.should.not.containDeep([{
+            key: 'path'
           }])
           done()
         })
@@ -80,9 +78,9 @@ describe('Creates', () => {
     it('should create challenge with M2M token', done => {
       const bundle = {
         inputData: {
+          method: 'POST',
           environment: 'Development',
           version: 'v5',
-          authenticate: 'yes',
           api: 'challenges',
           body: JSON.stringify({
             name: 'Topcoder Zapier',
@@ -120,10 +118,102 @@ describe('Creates', () => {
         })
         .catch(done)
     })
+    it('should patch challenge', done => {
+      const bundle = {
+        inputData: {
+          method: 'PATCH',
+          environment: 'Development',
+          version: 'v5',
+          api: 'challenges',
+          path: 'f1ddfc6d-9d26-4c21-9f50-437c36838e10',
+          body: JSON.stringify({
+            id: 'f1ddfc6d-9d26-4c21-9f50-437c36838e10',
+            name: 'Topcoder Zapier',
+            projectId: 16510,
+            status: 'Active'
+          }),
+          ...MOCK_M2M_INPUT
+        }
+      }
+
+      interceptM2MAndReturnMockCreds()
+
+      const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
+      nock(url)
+        .patch(`/${bundle.inputData.api}/${bundle.inputData.path}`, JSON.parse(bundle.inputData.body))
+        .reply(201, {
+          id: 'f1ddfc6d-9d26-4c21-9f50-437c36838e10',
+          created: '2020-05-03T03:32:33.135Z',
+          createdBy: 'TonyJ',
+          updated: '2020-05-03T03:32:33.135Z',
+          updatedBy: 'TonyJ',
+          name: 'Topcoder Zapier',
+          projectId: 16510,
+          status: 'Active',
+          terms: [],
+          groups: [],
+          numOfSubmissions: 0,
+          numOfRegistrants: 0
+        })
+
+      appTester(App.creates.record.operation.perform, bundle)
+        .then(group => {
+          group.id.should.eql('f1ddfc6d-9d26-4c21-9f50-437c36838e10')
+          done()
+        })
+        .catch(done)
+    })
+
+    it('should put challenge', done => {
+      const bundle = {
+        inputData: {
+          method: 'PUT',
+          environment: 'Development',
+          version: 'v5',
+          api: 'challenges',
+          path: 'f1ddfc6d-9d26-4c21-9f50-437c36838e10',
+          body: JSON.stringify({
+            id: 'f1ddfc6d-9d26-4c21-9f50-437c36838e10',
+            name: 'Topcoder Zapier',
+            projectId: 16510,
+            status: 'Active'
+          }),
+          ...MOCK_M2M_INPUT
+        }
+      }
+
+      interceptM2MAndReturnMockCreds()
+
+      const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
+      nock(url)
+        .put(`/${bundle.inputData.api}/${bundle.inputData.path}`, JSON.parse(bundle.inputData.body))
+        .reply(201, {
+          id: 'f1ddfc6d-9d26-4c21-9f50-437c36838e10',
+          created: '2020-05-03T03:32:33.135Z',
+          createdBy: 'TonyJ',
+          updated: '2020-05-03T03:32:33.135Z',
+          updatedBy: 'TonyJ',
+          name: 'Topcoder Zapier',
+          projectId: 16510,
+          status: 'Active',
+          terms: [],
+          groups: [],
+          numOfSubmissions: 0,
+          numOfRegistrants: 0
+        })
+
+      appTester(App.creates.record.operation.perform, bundle)
+        .then(group => {
+          group.id.should.eql('f1ddfc6d-9d26-4c21-9f50-437c36838e10')
+          done()
+        })
+        .catch(done)
+    })
 
     it('should not create challenge if projectId is missing', done => {
       const bundle = {
         inputData: {
+          method: 'POST',
           environment: 'Development',
           version: 'v5',
           api: 'challenges',
@@ -160,17 +250,20 @@ describe('Creates', () => {
     it('should create group', done => {
       const bundle = {
         inputData: {
+          method: 'POST',
           environment: 'Development',
           version: 'v5',
           api: 'groups',
-          authenticate: 'no',
           body: JSON.stringify({
             privateGroup: true,
             name: 'Zapier Test',
             selfRegister: true
-          })
+          }),
+          ...MOCK_M2M_INPUT
         }
       }
+
+      interceptM2MAndReturnMockCreds()
 
       const url = `${BASE_URL[bundle.inputData.environment]}/${bundle.inputData.version}`
       nock(url)

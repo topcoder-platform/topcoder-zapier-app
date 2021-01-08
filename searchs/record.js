@@ -5,7 +5,6 @@ const {
 const m2mAuth = require('tc-core-library-js').auth.m2m
 const {
   convertRes,
-  getQueryParam,
   getFinalPath
 } = require('../common/helper')
 
@@ -17,7 +16,7 @@ module.exports = {
   noun: 'Record',
   display: {
     label: 'Find Record',
-    description: 'Search record using TC API'
+    description: 'Search record using TC API (M2M)'
   },
 
   operation: {
@@ -44,86 +43,66 @@ module.exports = {
       choices: ['submissions', 'challenges', 'projects', 'members', 'groups', 'users', 'jobs', 'jobCandidates', 'resourceBookings']
     },
     {
-      key: 'authenticate',
-      label: 'Authentication with M2M token',
-      helpText: 'if M2M authentication is required (optional. default is \'no\')',
-      choices: ['yes', 'no'],
-      altersDynamicFields: true
-    },
-    {
       key: 'property',
       type: 'string',
       label: 'Property',
       helpText: 'the property value (optional)'
     },
     (z, bundle) => {
+      const authenticateParams = [{
+        key: 'clientId',
+        label: 'Client ID',
+        required: true,
+        type: 'string'
+      },
+      {
+        key: 'clientSecret',
+        label: 'Client Secret',
+        required: true,
+        type: 'string'
+      },
+      {
+        key: 'authAudience',
+        label: 'Auth Audience',
+        required: true,
+        type: 'string'
+      },
+      {
+        key: 'authUrl',
+        label: 'Auth Url',
+        required: true,
+        type: 'string'
+      }]
       if (bundle.inputData.version === 'v3' && bundle.inputData.api === 'members') {
-        return [{
-          key: 'handle',
-          type: 'string',
-          label: 'Handle',
-          required: true
-        }]
-      } else if (bundle.inputData.version === 'v5' && bundle.inputData.api === 'users') {
-        return [{
-          key: 'queryParam',
-          type: 'string',
-          label: 'Handle',
-          required: true
-        }]
-      } else if (bundle.inputData.version === 'v5' && bundle.inputData.api === 'jobs') {
-        return [{
-          key: 'queryParam',
-          type: 'string',
-          label: 'Job Id',
-          required: true
-        }]
-      } else if (bundle.inputData.version === 'v5' && bundle.inputData.api === 'jobCandidates') {
-        return [{
-          key: 'queryParam',
-          type: 'string',
-          label: 'Full query',
-          required: true
-        }]
-      } else if (bundle.inputData.authenticate === 'yes') {
-        return [{
-          key: 'clientId',
-          label: 'Client ID',
-          required: true,
-          type: 'string'
-        },
-        {
-          key: 'clientSecret',
-          label: 'Client Secret',
-          required: true,
-          type: 'string'
-        },
-        {
-          key: 'authAudience',
-          label: 'Auth Audience',
-          required: true,
-          type: 'string'
-        },
-        {
-          key: 'authUrl',
-          label: 'Auth Url',
-          required: true,
-          type: 'string'
-        },
-        {
-          key: 'path',
-          type: 'string',
-          label: 'Path',
-          helpText: 'the path parameter(optional)'
-        }
+        return [
+          ...authenticateParams,
+          {
+            key: 'handle',
+            type: 'string',
+            label: 'Handle',
+            required: true
+          }
+        ]
+      } else if (bundle.inputData.version === 'v5') {
+        return [
+          ...authenticateParams,
+          {
+            key: 'queryParam',
+            type: 'string',
+            label: 'Full query',
+            required: true
+          }
         ]
       } else {
-        return [{
-          key: 'path',
-          type: 'string',
-          label: 'Path',
-          helpText: 'the path parameter(optional)'
-        }]
+        return [
+          ...authenticateParams,
+          {
+            key: 'path',
+            type: 'string',
+            label: 'Path',
+            helpText: 'the path parameter(optional)'
+          }
+        ]
       }
     }
     ],
@@ -134,7 +113,6 @@ module.exports = {
         version,
         api,
         path,
-        authenticate,
         authUrl,
         authAudience,
         clientId,
@@ -145,45 +123,29 @@ module.exports = {
       } = bundle.inputData
       const finalPath = getFinalPath(path, handle)
       const url = `${BASE_URL[environment]}/${version}/${api}${finalPath}`
-      if (authenticate === 'yes') {
-        const options = {
-          method: 'GET'
-        }
-        const m2m = m2mAuth({
-          AUTH0_URL: authUrl.trim(),
-          AUTH0_AUDIENCE: authAudience.trim()
-        })
-        return m2m.getMachineToken(clientId.trim(), clientSecret.trim())
-          .then(token => z.request(url, _.assignIn(options, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          })))
-          .then(response => {
-            let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
-            res = convertRes(version, res)
-            if (property) {
-              res = _.map(res, e => _.pick(e, property))
-            }
-            return res
-          })
-      } else {
-        const options = {
-          method: 'GET',
-          url,
-          params: getQueryParam(api, queryParam)
-        }
-        return z
-          .request(options)
-          .then(response => {
-            let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
-            res = convertRes(version, res)
-            if (property) {
-              res = _.map(res, e => _.pick(e, property))
-            }
-            return res
-          })
+      const options = {
+        method: 'GET',
+        url,
+        params: queryParam ? JSON.parse(queryParam) : null
       }
+      const m2m = m2mAuth({
+        AUTH0_URL: authUrl.trim(),
+        AUTH0_AUDIENCE: authAudience.trim()
+      })
+      return m2m.getMachineToken(clientId.trim(), clientSecret.trim())
+        .then(token => z.request(_.assignIn(options, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })))
+        .then(response => {
+          let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
+          res = convertRes(version, res)
+          if (property) {
+            res = _.map(res, e => _.pick(e, property))
+          }
+          return res
+        })
     },
     sample: SAMPLE_CHALLENGE
   }

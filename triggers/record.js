@@ -16,7 +16,7 @@ module.exports = {
   noun: 'Record',
   display: {
     label: 'Get Record',
-    description: 'Triggers when a new record is available.'
+    description: 'Triggers when a new record is available (M2M).'
   },
 
   operation: {
@@ -43,13 +43,6 @@ module.exports = {
       choices: ['submissions', 'challenges', 'projects', 'members', 'groups']
     },
     {
-      key: 'authenticate',
-      label: 'Authentication with M2M token',
-      helpText: 'if M2M authentication is required (optional. default is \'no\')',
-      choices: ['yes', 'no'],
-      altersDynamicFields: true
-    },
-    {
       key: 'property',
       type: 'string',
       label: 'Property',
@@ -63,7 +56,7 @@ module.exports = {
           label: 'Handle',
           required: true
         }]
-      } else if (bundle.inputData.authenticate === 'yes') {
+      } else {
         return [{
           key: 'clientId',
           label: 'Client ID',
@@ -93,18 +86,9 @@ module.exports = {
           type: 'string',
           label: 'Path',
           helpText: 'the path parameter(optional)'
-        }
-        ]
-      } else {
-        return [{
-          key: 'path',
-          type: 'string',
-          label: 'Path',
-          helpText: 'the path parameter(optional)'
         }]
       }
-    }
-    ],
+    }],
 
     perform: (z, bundle) => {
       const {
@@ -112,7 +96,6 @@ module.exports = {
         version,
         api,
         path,
-        authenticate,
         authUrl,
         authAudience,
         clientId,
@@ -122,40 +105,27 @@ module.exports = {
       } = bundle.inputData
       const finalPath = getFinalPath(path, handle)
       const url = `${BASE_URL[environment]}/${version}/${api}${finalPath}`
-      if (authenticate === 'yes') {
-        const options = {
-          method: 'GET'
-        }
-        const m2m = m2mAuth({
-          AUTH0_URL: authUrl.trim(),
-          AUTH0_AUDIENCE: authAudience.trim()
-        })
-        return m2m.getMachineToken(clientId.trim(), clientSecret.trim())
-          .then(token => z.request(url, _.assignIn(options, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          })))
-          .then(response => {
-            let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
-            res = convertRes(version, res)
-            if (property) {
-              res = _.map(res, e => _.pick(e, property))
-            }
-            return res
-          })
-      } else {
-        return z
-          .request(url)
-          .then(response => {
-            let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
-            res = convertRes(version, res)
-            if (property) {
-              res = _.map(res, e => _.pick(e, property))
-            }
-            return res
-          })
+      const options = {
+        method: 'GET'
       }
+      const m2m = m2mAuth({
+        AUTH0_URL: authUrl.trim(),
+        AUTH0_AUDIENCE: authAudience.trim()
+      })
+      return m2m.getMachineToken(clientId.trim(), clientSecret.trim())
+        .then(token => z.request(url, _.assignIn(options, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })))
+        .then(response => {
+          let res = response.content ? JSON.parse(response.content) : JSON.parse(response)
+          res = convertRes(version, res)
+          if (property) {
+            res = _.map(res, e => _.pick(e, property))
+          }
+          return res
+        })
     },
 
     outputFields: [(z, bundle) => {
