@@ -4,11 +4,37 @@ const {
 } = require('../config')
 const m2mAuth = require('tc-core-library-js').auth.m2m
 const {
+  API_NAMES,
   convertRes,
   getFinalPath
 } = require('../common/helper')
 
 const SAMPLE_CHALLENGE = require('../common/samples').search.challenge
+
+const authenticateParams = [{
+  key: 'clientId',
+  label: 'Client ID',
+  required: true,
+  type: 'string'
+},
+{
+  key: 'clientSecret',
+  label: 'Client Secret',
+  required: true,
+  type: 'string'
+},
+{
+  key: 'authAudience',
+  label: 'Auth Audience',
+  required: true,
+  type: 'string'
+},
+{
+  key: 'authUrl',
+  label: 'Auth Url',
+  required: true,
+  type: 'string'
+}]
 
 module.exports = {
   key: 'record',
@@ -40,7 +66,8 @@ module.exports = {
       label: 'API',
       helpText: 'the api type',
       required: true,
-      choices: ['submissions', 'challenges', 'projects', 'members', 'groups', 'users', 'jobs', 'jobCandidates', 'resourceBookings']
+      choices: API_NAMES,
+      altersDynamicFields: true
     },
     {
       key: 'property',
@@ -48,34 +75,10 @@ module.exports = {
       label: 'Property',
       helpText: 'the property value (optional)'
     },
+    ...authenticateParams,
     (z, bundle) => {
-      const authenticateParams = [{
-        key: 'clientId',
-        label: 'Client ID',
-        required: true,
-        type: 'string'
-      },
-      {
-        key: 'clientSecret',
-        label: 'Client Secret',
-        required: true,
-        type: 'string'
-      },
-      {
-        key: 'authAudience',
-        label: 'Auth Audience',
-        required: true,
-        type: 'string'
-      },
-      {
-        key: 'authUrl',
-        label: 'Auth Url',
-        required: true,
-        type: 'string'
-      }]
       if (bundle.inputData.version === 'v3' && bundle.inputData.api === 'members') {
         return [
-          ...authenticateParams,
           {
             key: 'handle',
             type: 'string',
@@ -83,9 +86,8 @@ module.exports = {
             required: true
           }
         ]
-      } else if (bundle.inputData.version === 'v5') {
+      } else if (bundle.inputData.version === 'v5' && bundle.inputData.api !== 'taas-teams') {
         return [
-          ...authenticateParams,
           {
             key: 'queryParam',
             type: 'string',
@@ -93,9 +95,18 @@ module.exports = {
             required: true
           }
         ]
+      } else if (bundle.inputData.version === 'v5' && bundle.inputData.api === 'taas-teams') {
+        return [
+          {
+            key: 'path',
+            type: 'string',
+            label: 'Path',
+            helpText: 'the path parameter',
+            required: true
+          }
+        ]
       } else {
         return [
-          ...authenticateParams,
           {
             key: 'path',
             type: 'string',

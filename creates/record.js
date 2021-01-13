@@ -3,6 +3,9 @@ const {
   BASE_URL
 } = require('../config')
 const m2mAuth = require('tc-core-library-js').auth.m2m
+const {
+  API_NAMES
+} = require('../common/helper')
 
 const SAMPLE_CHALLENGE_CREATE = require('../common/samples').create.challenge
 
@@ -36,7 +39,7 @@ module.exports = {
       label: 'API',
       helpText: 'the api type',
       required: true,
-      choices: ['submissions', 'challenges', 'projects', 'members', 'groups', 'users', 'jobs', 'jobCandidates', 'resourceBookings']
+      choices: API_NAMES
     },
     {
       key: 'method',

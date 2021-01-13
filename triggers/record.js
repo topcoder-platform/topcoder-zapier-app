@@ -4,6 +4,7 @@ const {
 } = require('../config')
 const m2mAuth = require('tc-core-library-js').auth.m2m
 const {
+  API_NAMES,
   convertRes,
   getFinalPath
 } = require('../common/helper')
@@ -40,7 +41,7 @@ module.exports = {
       label: 'API',
       helpText: 'the api type',
       required: true,
-      choices: ['submissions', 'challenges', 'projects', 'members', 'groups']
+      choices: API_NAMES
     },
     {
       key: 'property',

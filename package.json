@@ -20,6 +20,7 @@
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.28",
     "tc-core-library-js": "appirio-tech/tc-core-library-js.git#v2.6.4",
+    "uuid": "^8.3.2",
     "zapier-platform-core": "10.1.2"
   },
   "devDependencies": {

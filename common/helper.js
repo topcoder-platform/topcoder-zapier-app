@@ -1,7 +1,23 @@
 const _ = require('lodash')
+const { v4: uuidv4 } = require('uuid')
 const moment = require('moment-timezone')
 
+const API_NAMES = [
+  'submissions',
+  'challenges',
+  'projects',
+  'members',
+  'groups',
+  'users',
+  'jobs',
+  'jobCandidates',
+  'resourceBookings',
+  'taas-teams'
+]
+
 module.exports = {
+  API_NAMES,
+
   getFinalPath: (path, handle) => {
     if (path && path.length) {
       if (path.startsWith('/')) {
@@ -22,6 +38,7 @@ module.exports = {
       _.each(results, item => {
         item.startDateFormatted = moment(item.startDate).tz('America/New_York').format()
         item.tagsFormatted = (item.tags && item.tags.length) ? _.join(item.tags, ',') : ''
+        if (!item.id) item.id = uuidv4()
       })
       return results
     } else {
