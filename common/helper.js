@@ -12,7 +12,11 @@ const API_NAMES = [
   'jobs',
   'jobCandidates',
   'resourceBookings',
-  'taas-teams'
+  'taas-teams',
+  'work-periods',
+  'work-period-payments',
+  'interviews',
+  'bus/events'
 ]
 
 module.exports = {

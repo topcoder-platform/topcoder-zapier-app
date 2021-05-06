@@ -112,6 +112,12 @@ module.exports = {
             type: 'string',
             label: 'Path',
             helpText: 'the path parameter(optional)'
+          },
+          {
+            key: 'queryParam',
+            type: 'string',
+            label: 'Full query',
+            helpText: 'a full query parameter(optional)'
           }
         ]
       }
